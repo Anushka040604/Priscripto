@@ -1,37 +1,44 @@
 pipeline {
     agent any
 
-    environment {
-        COMPOSE_PROJECT_NAME = "Prescripto"
-    }
-
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                echo "Cloning project repo..."
-                git url: 'https://github.com/Anushka040604/Priscripto.git', branch: 'main'
+                checkout scm
             }
         }
 
-        stage('Build Images') {
+        stage('Install Admin Dependencies') {
             steps {
-                echo "Building Docker images..."
-                sh 'docker-compose -f docker-compose.yml build'
+                dir('admin') {
+                    sh 'npm install'
+                }
             }
         }
 
-        stage('Start Containers') {
+        stage('Install Frontend Dependencies') {
             steps {
-                echo "Starting services with Docker Compose..."
-                sh 'docker-compose -f docker-compose.yml up -d'
+                dir('frontend') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Install Backend Dependencies') {
+            steps {
+                dir('backend') {
+                    sh 'npm install'
+                }
             }
         }
     }
 
     post {
-        always {
-            echo "Cleaning up containers after pipeline run..."
-            sh 'docker-compose -f docker-compose.yml down'
+        success {
+            echo '✅ All dependencies installed successfully!'
+        }
+        failure {
+            echo '❌ Something went wrong!'
         }
     }
 }
